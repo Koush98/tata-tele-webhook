@@ -1,0 +1,99 @@
+            Name                                                            Trigger
+
+
+Outgoing Call Missed by Agent               =                    Call Hangup (Missed)(deprecated)  /Type=Outbound     
+Outgoing Call Answered by Agent             =                    Call Hangup (Answered)(deprecated) /Type=Outbound
+Incoming Call Missed                        =                     Call Hangup (Missed)(deprecated) /Type=Inbound
+Incoming Call Hangup                        =                   Call Hangup (Answered)(deprecated) /Type=Inbound
+
+
+
+
+Call Hangup (Missed)(deprecated)  /Type=Outbound 
+
+        {
+  "callID": "$uuid",
+  "dispnumber": "$caller_id_number",
+  "caller_id": "$answered_agent.number",
+  "start_time": "$start_stamp",
+  "answer_stamp": "$answer_stamp",
+  "end_time": "$end_stamp",
+  "callType": "outbound",
+  "call_duration": "$duration",
+  "destination": "$call_to_number",
+  "status": "$call_status",
+  "resource_url": "$recording_url",
+  "missedFrom": "$missed_agent",
+  "hangup_cause": "$hangup_cause"
+}
+
+
+
+Call Hangup (Answered)(deprecated) /Type=Outbound
+
+
+{
+  "callID": "$uuid",
+  "dispnumber": "$caller_id_number",
+  "caller_id": "$answered_agent.number",
+  "start_time": "$start_stamp",
+  "answer_stamp": "$answer_stamp",
+  "end_time": "$end_stamp",
+  "callType": "outbound",
+  "call_duration": "$duration",
+  "destination": "$call_to_number",
+  "status": "$call_status",
+  "resource_url": "$recording_url",
+  "missedFrom": "$missed_agent",
+  "hangup_cause": "$hangup_cause"
+}
+
+
+Call Hangup (Missed)(deprecated) /Type=Inbound
+
+{
+  "callID": "$uuid",
+  "dispnumber": "$call_to_number",
+  "caller_id": "$caller_id_number",
+  "start_time": "$start_stamp",
+  "answer_stamp": "$answer_stamp",
+  "end_time": "$end_stamp",
+  "callType": "inbound",
+  "call_duration": "$duration",
+  "destination": "$answered_agent.number",
+  "status": "$call_status",
+  "resource_url": "$recording_url",
+  "missedFrom": "$missed_agent",
+  "hangup_cause": "$hangup_cause"
+}
+
+
+
+Call Hangup (Answered)(deprecated) /Type=Inbound
+
+
+ {
+  "callID": "$uuid",
+  "dispnumber": "$call_to_number",
+  "caller_id": "$caller_id_number",
+  "start_time": "$start_stamp",
+  "answer_stamp": "$answer_stamp",
+  "end_time": "$end_stamp",
+  "callType": "inbound",
+  "call_duration": "$duration",
+  "destination": "$answered_agent.number",
+  "status": "$call_status",
+  "resource_url": "$recording_url",
+  "missedFrom": "$missed_agent",
+  "hangup_cause": "$hangup_cause"
+}
+
+
+
+
+
+
+
+
+
+
