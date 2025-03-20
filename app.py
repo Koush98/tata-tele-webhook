@@ -1,15 +1,16 @@
 from flask import Flask, request, jsonify
 import pymysql
+import os
 from datetime import datetime
 
 app = Flask(__name__)
 
-# ✅ MySQL Database Config
+# ✅ Get MySQL Credentials from Environment Variables
 db_config = {
-    "host": "localhost",  # Change to your cloud DB host if needed
-    "user": "root",
-    "password": "Kingston#1234",
-    "database": "lead_db",
+    "host": os.getenv("DB_HOST", "localhost"),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "lead_db"),
 }
 
 # ✅ Function to Insert Data into MySQL
@@ -17,6 +18,9 @@ def insert_into_db(table_name, data):
     try:
         conn = pymysql.connect(**db_config)
         cursor = conn.cursor()
+
+        def parse_datetime(value):
+            return datetime.strptime(value, "%Y-%m-%d %H:%M:%S") if value else None
 
         sql = f"""
         INSERT INTO {table_name} (
@@ -26,10 +30,10 @@ def insert_into_db(table_name, data):
         """
         values = (
             data.get("callID"), data.get("dispnumber"), data.get("caller_id"),
-            data.get("start_time"), data.get("answer_stamp"), data.get("end_time"),
-            data.get("callType"), data.get("call_duration"), data.get("destination"),
-            data.get("status"), data.get("resource_url"), data.get("missedFrom"),
-            data.get("hangup_cause")
+            parse_datetime(data.get("start_time")), parse_datetime(data.get("answer_stamp")), 
+            parse_datetime(data.get("end_time")), data.get("callType"),
+            data.get("call_duration"), data.get("destination"), data.get("status"),
+            data.get("resource_url"), data.get("missedFrom"), data.get("hangup_cause")
         )
 
         cursor.execute(sql, values)
@@ -40,8 +44,10 @@ def insert_into_db(table_name, data):
         print(f"❌ Database Error: {str(e)}")
 
     finally:
-        cursor.close()
-        conn.close()  # ✅ Ensures DB connection is always closed
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 # ✅ Webhook Endpoints
 @app.route('/')
@@ -90,4 +96,4 @@ def missed_inbound():
 
 # ✅ Run Flask App
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=True)
