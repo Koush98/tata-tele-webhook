@@ -4,12 +4,12 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 
-# ✅ Load environment variables securely
+# ✅ Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 
-# ✅ Azure SQL Database Configuration from Environment Variables
+# ✅ Azure SQL Database Configuration
 db_config = {
     "server": os.getenv("AZURE_SQL_SERVER"),
     "database": os.getenv("AZURE_SQL_DATABASE"),
@@ -18,7 +18,7 @@ db_config = {
     "driver": "{ODBC Driver 17 for SQL Server}"
 }
 
-# ✅ Whitelist of valid table names to prevent SQL injection
+# ✅ Allowed table names
 VALID_TABLES = {
     "answered_outbound_calls",
     "answered_inbound_calls",
@@ -26,7 +26,7 @@ VALID_TABLES = {
     "missed_inbound_calls"
 }
 
-# ✅ Create Database Connection Function
+# ✅ Get database connection
 def get_db_connection():
     try:
         conn = pyodbc.connect(
@@ -38,26 +38,27 @@ def get_db_connection():
         )
         return conn
     except pyodbc.Error as e:
-        print(f"❌ Database Connection Error: {str(e)}")
-        return None  # Ensure None is returned if connection fails
+        print(f"❌ Database Connection Error: {e}")
+        return None
 
-# ✅ Function to Insert Data into Azure SQL
+# ✅ Insert data function
 def insert_into_db(table_name, data):
     if table_name not in VALID_TABLES:
         print(f"❌ Invalid table name: {table_name}")
-        return
-    
+        return False
+
     conn = get_db_connection()
     if not conn:
-        return
+        return False
 
     try:
         cursor = conn.cursor()
 
+        # ✅ Helper function for datetime parsing
         def parse_datetime(value):
             try:
                 return datetime.strptime(value, "%Y-%m-%d %H:%M:%S") if value else None
-            except (ValueError, TypeError):
+            except ValueError:
                 print(f"⚠️ Invalid datetime format: {value}")
                 return None
 
@@ -80,64 +81,47 @@ def insert_into_db(table_name, data):
         conn.commit()
         print(f"✅ Data inserted into {table_name}")
 
+        return True
+
     except pyodbc.Error as e:
-        print(f"❌ Database Error: {str(e)}")
+        print(f"❌ Database Error: {e}")
+        return False
 
     finally:
-        if cursor:
-            cursor.close()
-        if conn:
-            conn.close()
+        cursor.close()
+        conn.close()
 
-# ✅ Webhook Endpoints
+# ✅ Webhook Routes
 @app.route('/')
 def home():
     return "Azure SQL Webhook Receiver is Running", 200
 
-@app.route('/answered_outbound', methods=['POST'])
-def answered_outbound():
+@app.route('/<call_type>', methods=['POST'])
+def handle_calls(call_type):
     data = request.json
     if not data:
         return jsonify({"error": "No data received"}), 400
 
-    data["callType"] = "answered_outbound"
-    print(f"📞 Answered Outbound Call Received: {data}")
-    insert_into_db("answered_outbound_calls", data)
-    return jsonify({"message": "Answered outbound call received"}), 200
+    table_mapping = {
+        "answered_outbound": "answered_outbound_calls",
+        "answered_inbound": "answered_inbound_calls",
+        "missed_outbound": "missed_outbound_calls",
+        "missed_inbound": "missed_inbound_calls"
+    }
 
-@app.route('/answered_inbound', methods=['POST'])
-def answered_inbound():
-    data = request.json
-    if not data:
-        return jsonify({"error": "No data received"}), 400
+    table_name = table_mapping.get(call_type)
+    if not table_name:
+        return jsonify({"error": "Invalid call type"}), 400
 
-    data["callType"] = "answered_inbound"
-    print(f"📞 Answered Inbound Call Received: {data}")
-    insert_into_db("answered_inbound_calls", data)
-    return jsonify({"message": "Answered inbound call received"}), 200
+    data["callType"] = call_type
+    print(f"📞 {call_type.replace('_', ' ').title()} Call Received: {data}")
 
-@app.route('/missed_outbound', methods=['POST'])
-def missed_outbound():
-    data = request.json
-    if not data:
-        return jsonify({"error": "No data received"}), 400
-
-    data["callType"] = "missed_outbound"
-    print(f"📞 Missed Outbound Call Received: {data}")
-    insert_into_db("missed_outbound_calls", data)
-    return jsonify({"message": "Missed outbound call received"}), 200
-
-@app.route('/missed_inbound', methods=['POST'])
-def missed_inbound():
-    data = request.json
-    if not data:
-        return jsonify({"error": "No data received"}), 400
-
-    data["callType"] = "missed_inbound"
-    print(f"📞 Missed Inbound Call Received: {data}")
-    insert_into_db("missed_inbound_calls", data)
-    return jsonify({"message": "Missed inbound call received"}), 200
+    if insert_into_db(table_name, data):
+        return jsonify({"message": f"{call_type.replace('_', ' ').title()} call received"}), 200
+    else:
+        return jsonify({"error": "Database insertion failed"}), 500
 
 # ✅ Run Flask App
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.getenv("PORT", 5000)), debug=True)
+    port = int(os.getenv("PORT", 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
