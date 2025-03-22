@@ -1,22 +1,41 @@
 from flask import Flask, request, jsonify
-import pymysql
+import pyodbc
 import os
 from datetime import datetime
 
 app = Flask(__name__)
 
-# ✅ Get MySQL Credentials from Environment Variables
+# ✅ Azure SQL Database Configuration from Environment Variables
 db_config = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "lead_db"),
+    "server": os.getenv("AZURE_SQL_SERVER", "kei-sql-server.database.windows.net"),
+    "database": os.getenv("AZURE_SQL_DATABASE", "LeadManagementDB"),
+    "username": os.getenv("AZURE_SQL_USER", "adminuser"),
+    "password": os.getenv("AZURE_SQL_PASSWORD", "Kingston#1234"),
+    "driver": "{ODBC Driver 17 for SQL Server}"
 }
 
-# ✅ Function to Insert Data into MySQL
-def insert_into_db(table_name, data):
+# ✅ Create Connection Function
+def get_db_connection():
     try:
-        conn = pymysql.connect(**db_config)
+        conn = pyodbc.connect(
+            f"DRIVER={db_config['driver']};"
+            f"SERVER={db_config['server']};"
+            f"DATABASE={db_config['database']};"
+            f"UID={db_config['username']};"
+            f"PWD={db_config['password']}"
+        )
+        return conn
+    except Exception as e:
+        print(f"❌ Database Connection Error: {str(e)}")
+        return None
+
+# ✅ Function to Insert Data into Azure SQL
+def insert_into_db(table_name, data):
+    conn = get_db_connection()
+    if not conn:
+        return
+
+    try:
         cursor = conn.cursor()
 
         def parse_datetime(value):
@@ -26,11 +45,12 @@ def insert_into_db(table_name, data):
         INSERT INTO {table_name} (
             callID, dispnumber, caller_id, start_time, answer_stamp, end_time,
             callType, call_duration, destination, status, resource_url, missedFrom, hangup_cause
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
+
         values = (
             data.get("callID"), data.get("dispnumber"), data.get("caller_id"),
-            parse_datetime(data.get("start_time")), parse_datetime(data.get("answer_stamp")), 
+            parse_datetime(data.get("start_time")), parse_datetime(data.get("answer_stamp")),
             parse_datetime(data.get("end_time")), data.get("callType"),
             data.get("call_duration"), data.get("destination"), data.get("status"),
             data.get("resource_url"), data.get("missedFrom"), data.get("hangup_cause")
@@ -40,7 +60,7 @@ def insert_into_db(table_name, data):
         conn.commit()
         print(f"✅ Data inserted into {table_name}")
 
-    except pymysql.MySQLError as e:
+    except Exception as e:
         print(f"❌ Database Error: {str(e)}")
 
     finally:
@@ -52,12 +72,13 @@ def insert_into_db(table_name, data):
 # ✅ Webhook Endpoints
 @app.route('/')
 def home():
-    return "Tata Tele Webhook Receiver is Running", 200
+    return "Azure SQL Webhook Receiver is Running", 200
 
 @app.route('/answered_outbound', methods=['POST'])
 def answered_outbound():
     data = request.json
-    if not data: return jsonify({"error": "No data received"}), 400
+    if not data:
+        return jsonify({"error": "No data received"}), 400
 
     data["callType"] = "answered_outbound"
     print(f"📞 Answered Outbound Call Received: {data}")
@@ -67,7 +88,8 @@ def answered_outbound():
 @app.route('/answered_inbound', methods=['POST'])
 def answered_inbound():
     data = request.json
-    if not data: return jsonify({"error": "No data received"}), 400
+    if not data:
+        return jsonify({"error": "No data received"}), 400
 
     data["callType"] = "answered_inbound"
     print(f"📞 Answered Inbound Call Received: {data}")
@@ -77,7 +99,8 @@ def answered_inbound():
 @app.route('/missed_outbound', methods=['POST'])
 def missed_outbound():
     data = request.json
-    if not data: return jsonify({"error": "No data received"}), 400
+    if not data:
+        return jsonify({"error": "No data received"}), 400
 
     data["callType"] = "missed_outbound"
     print(f"📞 Missed Outbound Call Received: {data}")
@@ -87,7 +110,8 @@ def missed_outbound():
 @app.route('/missed_inbound', methods=['POST'])
 def missed_inbound():
     data = request.json
-    if not data: return jsonify({"error": "No data received"}), 400
+    if not data:
+        return jsonify({"error": "No data received"}), 400
 
     data["callType"] = "missed_inbound"
     print(f"📞 Missed Inbound Call Received: {data}")
