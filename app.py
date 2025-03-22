@@ -1,20 +1,32 @@
 from flask import Flask, request, jsonify
 import pyodbc
 import os
+from dotenv import load_dotenv
 from datetime import datetime
+
+# ✅ Load environment variables securely
+load_dotenv()
 
 app = Flask(__name__)
 
 # ✅ Azure SQL Database Configuration from Environment Variables
 db_config = {
-    "server": os.getenv("AZURE_SQL_SERVER", "kei-sql-server.database.windows.net"),
-    "database": os.getenv("AZURE_SQL_DATABASE", "LeadManagementDB"),
-    "username": os.getenv("AZURE_SQL_USER", "adminuser"),
-    "password": os.getenv("AZURE_SQL_PASSWORD", "Kingston#1234"),
+    "server": os.getenv("AZURE_SQL_SERVER"),
+    "database": os.getenv("AZURE_SQL_DATABASE"),
+    "username": os.getenv("AZURE_SQL_USER"),
+    "password": os.getenv("AZURE_SQL_PASSWORD"),
     "driver": "{ODBC Driver 17 for SQL Server}"
 }
 
-# ✅ Create Connection Function
+# ✅ Whitelist of valid table names to prevent SQL injection
+VALID_TABLES = {
+    "answered_outbound_calls",
+    "answered_inbound_calls",
+    "missed_outbound_calls",
+    "missed_inbound_calls"
+}
+
+# ✅ Create Database Connection Function
 def get_db_connection():
     try:
         conn = pyodbc.connect(
@@ -25,12 +37,16 @@ def get_db_connection():
             f"PWD={db_config['password']}"
         )
         return conn
-    except Exception as e:
+    except pyodbc.Error as e:
         print(f"❌ Database Connection Error: {str(e)}")
-        return None
+        return None  # Ensure None is returned if connection fails
 
 # ✅ Function to Insert Data into Azure SQL
 def insert_into_db(table_name, data):
+    if table_name not in VALID_TABLES:
+        print(f"❌ Invalid table name: {table_name}")
+        return
+    
     conn = get_db_connection()
     if not conn:
         return
@@ -39,7 +55,11 @@ def insert_into_db(table_name, data):
         cursor = conn.cursor()
 
         def parse_datetime(value):
-            return datetime.strptime(value, "%Y-%m-%d %H:%M:%S") if value else None
+            try:
+                return datetime.strptime(value, "%Y-%m-%d %H:%M:%S") if value else None
+            except (ValueError, TypeError):
+                print(f"⚠️ Invalid datetime format: {value}")
+                return None
 
         sql = f"""
         INSERT INTO {table_name} (
@@ -60,7 +80,7 @@ def insert_into_db(table_name, data):
         conn.commit()
         print(f"✅ Data inserted into {table_name}")
 
-    except Exception as e:
+    except pyodbc.Error as e:
         print(f"❌ Database Error: {str(e)}")
 
     finally:
