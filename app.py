@@ -14,7 +14,8 @@ db_config = {
 }
 
 # ✅ Create Database Connection Using SQLAlchemy with Safe ODBC Driver
-DATABASE_URL = f"mssql+pyodbc://{db_config['username']}:{db_config['password']}@{db_config['server']}/{db_config['database']}?driver={{{'ODBC Driver 18 for SQL Server'}}}&TrustServerCertificate=yes"
+DATABASE_URL = f"mssql+pyodbc://{db_config['username']}:{db_config['password']}@{db_config['server']}/{db_config['database']}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate=yes"
+
 
 engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=10)
 # ✅ Whitelist of valid table names to prevent SQL injection
