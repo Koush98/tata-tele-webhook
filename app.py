@@ -18,7 +18,8 @@ db_config = {
 }
 
 # ✅ Create Database Connection Using SQLAlchemy
-DATABASE_URL = f"mssql+pymssql://{db_config['username']}:{db_config['password']}@{db_config['server']}/{db_config['database']}"
+DATABASE_URL = f"mssql+pyodbc://{db_config['username']}:{db_config['password']}@{db_config['server']}/{db_config['database']}?driver=ODBC+Driver+18+for+SQL+Server"
+
 engine = create_engine(DATABASE_URL)
 
 # ✅ Whitelist of valid table names to prevent SQL injection
