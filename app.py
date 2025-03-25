@@ -1,26 +1,21 @@
 from flask import Flask, request, jsonify
 from sqlalchemy import create_engine, text
 import os
-from dotenv import load_dotenv
 from datetime import datetime
-
-# ✅ Load environment variables securely
-load_dotenv()
 
 app = Flask(__name__)
 
-# ✅ Azure SQL Database Configuration from Environment Variables
+# ✅ Hardcoded Azure SQL Database Configuration (For Testing Only)
 db_config = {
-    "server": os.getenv("AZURE_SQL_SERVER"),
-    "database": os.getenv("AZURE_SQL_DATABASE"),
-    "username": os.getenv("AZURE_SQL_USER"),
-    "password": os.getenv("AZURE_SQL_PASSWORD"),
+    "server": "kei-sql-server.database.windows.net",
+    "database": "LeadManagementDB",
+    "username": "adminuser",
+    "password": "Kingston#1234",
 }
 
 # ✅ Create Database Connection Using SQLAlchemy with Safe ODBC Driver
 DATABASE_URL = f"mssql+pyodbc://{db_config['username']}:{db_config['password']}@{db_config['server']}/{db_config['database']}?driver=ODBC+Driver+18+for+SQL+Server"
 engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=10)
-
 # ✅ Whitelist of valid table names to prevent SQL injection
 VALID_TABLES = {"answered_outbound_calls", "answered_inbound_calls", "missed_outbound_calls", "missed_inbound_calls"}
 
