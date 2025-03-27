@@ -7,9 +7,9 @@ app = Flask(__name__)
 
 # ✅ Hardcoded Azure SQL Database Configuration (For Testing Only)
 db_config = {
-    "server": "kei-sql-server.database.windows.net",
-    "database": "LeadManagementDB",
-    "username": "adminuser",
+    "server": "localhost",
+    "database": "lead_db",
+    "username": "root",
     "password": "Kingston#1234",
 }
 
