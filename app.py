@@ -67,7 +67,7 @@ def insert_into_db(table_name, data):
         return False
 
 # ✅ Webhook Route
-@app.route('/webhook/<call_type>', methods=['POST'])
+@app.route('/<call_type>', methods=['POST'])
 def handle_call_webhook(call_type):
     table_mapping = {
         "answered_outbound": "answered_outbound_calls",
