@@ -8,8 +8,8 @@ app = Flask(__name__)
 # ✅ Database Configuration
 db_config = {
     "host": "localhost",
-    "database": "lead_db",
-    "username": "root",
+    "database": "koushik2_kei-leads",
+    "username": "koushik2_admin",
     "password": "Kingston#1234",
 }
 
