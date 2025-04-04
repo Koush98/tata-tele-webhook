@@ -7,7 +7,7 @@ app = Flask(__name__)
 
 # ✅ Database Configuration
 db_config = {
-    "host": "localhost",
+    "host": "server541.iseencloud.net",
     "database": "koushik2_kei-leads",
     "username": "koushik2_admin",
     "password": "Kingston#1234",
