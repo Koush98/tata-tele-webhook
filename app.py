@@ -9,7 +9,7 @@ app = Flask(__name__)
 db_config = {
     "host": "kei-mysql-server.mysql.database.azure.com",
     "database": "daily_transferred_leads",
-    "username": "koushik2_admin",
+    "username": "adminuser",
     "password": "Kingston#1234",
 }
 
