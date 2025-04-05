@@ -7,8 +7,8 @@ app = Flask(__name__)
 
 # ✅ Database Configuration
 db_config = {
-    "host": "server541.iseencloud.net",
-    "database": "koushik2_kei-leads",
+    "host": "kei-mysql-server.mysql.database.azure.com",
+    "database": "daily_transferred_leads",
     "username": "koushik2_admin",
     "password": "Kingston#1234",
 }
