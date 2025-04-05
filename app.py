@@ -44,23 +44,34 @@ def insert_into_db(table_name, data):
 
     try:
         with engine.begin() as connection:
+            # ✅ Build the expected data dictionary manually
+            insert_data = {
+                "callID": data.get("CallSessionId"),
+                "dispnumber": data.get("DisplayNumber"),
+                "caller_id": data.get("SourceNumber"),
+                "start_time": parse_datetime(data.get("StartTime")),
+                "answer_stamp": parse_datetime(data.get("AnswerTime")),
+                "end_time": parse_datetime(data.get("EndTime")),
+                "callType": data.get("Direction"),
+                "call_duration": data.get("Duration"),
+                "destination": data.get("DestinationNumber"),
+                "status": data.get("Status"),
+                "resource_url": data.get("RecordingUrl"),
+                "missedFrom": data.get("CallerSource"),
+                "hangup_cause": data.get("HangupCause") or "unknown"
+            }
+
             sql = text(f"""
-            INSERT INTO {table_name} (
-                callID, dispnumber, caller_id, start_time, answer_stamp, end_time,
-                callType, call_duration, destination, status, resource_url, missedFrom, hangup_cause
-            ) VALUES (
-                :callID, :dispnumber, :caller_id, :start_time, :answer_stamp, :end_time,
-                :callType, :call_duration, :destination, :status, :resource_url, :missedFrom, :hangup_cause
-            )
+                INSERT INTO {table_name} (
+                    callID, dispnumber, caller_id, start_time, answer_stamp, end_time,
+                    callType, call_duration, destination, status, resource_url, missedFrom, hangup_cause
+                ) VALUES (
+                    :callID, :dispnumber, :caller_id, :start_time, :answer_stamp, :end_time,
+                    :callType, :call_duration, :destination, :status, :resource_url, :missedFrom, :hangup_cause
+                )
             """)
 
-            # ✅ Convert date fields
-            data["start_time"] = parse_datetime(data.get("start_time"))
-            data["answer_stamp"] = parse_datetime(data.get("answer_stamp"))
-            data["end_time"] = parse_datetime(data.get("end_time"))
-
-            # ✅ Execute query
-            connection.execute(sql, data)
+            connection.execute(sql, insert_data)
             print(f"✅ Data inserted into {table_name}")
             return True
 
