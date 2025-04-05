@@ -9,12 +9,14 @@ app = Flask(__name__)
 db_config = {
     "host": "kei-mysql-server.mysql.database.azure.com",
     "database": "daily_transferred_leads",
-    "username": "adminuser",
+    "username": "adminuser@kei-mysql-server",  # 👈 include server name
     "password": "Kingston#1234",
 }
 
-# ✅ Create MySQL Connection String
-DATABASE_URL = f"mysql+pymysql://{db_config['username']}:{db_config['password']}@{db_config['host']}/{db_config['database']}"
+DATABASE_URL = (
+    f"mysql+pymysql://{db_config['username']}:{db_config['password']}"
+    f"@{db_config['host']}/{db_config['database']}?ssl_ca=/etc/ssl/certs/ca-certificates.crt"
+)
 
 engine = create_engine(DATABASE_URL, pool_size=5, max_overflow=10)
 
